@@ -88,6 +88,16 @@ Open the code editor by running the following command,
 dts code editor
 ```
 
+**Optional: local GPU acceleration for training**
+
+If you want to train the model using your local machine's GPU (instead of Google Colab), you need to install the [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html) on your machine first. Once installed, launch the editor with GPU access enabled:
+
+```
+dts code editor --gpus all
+```
+
+This allows the training notebook to see your local GPU(s), so that it can run on your machine's GPU. If you do not have a GPU on your machine, skip this step.
+
 Wait for a URL to appear on the terminal, then click on it or copy-paste it in the address bar
 of your browser to access the code editor. The first thing you will see in the code editor is
 this same document, you can continue there.
@@ -164,10 +174,9 @@ dts code build -R ROBOT_NAME [--local]
 
 This will build a docker image with your code compiled inside. 
 
-
-**Note**: For the time being if `ROBOT_NAME` is a **real** Duckiebot, you should build with the `--local` flag. This
-will cause the image to be built on your local machine rather than on the Duckiebot itself. 
-
+If `ROBOT_NAME` is a **real** Duckiebot, the image is built on the Duckiebot itself. This works, but it is slow
+(the robot has to download and install all the dependencies). Add the `--local` flag to build the image on your
+laptop instead: this is the recommended (and much faster) option. The flag is not needed for a virtual robot.
 
 
 ### 💻 Testing 
@@ -181,8 +190,10 @@ dts code workbench [-m] -R ROBOT_NAME [--local]
 
 You should include the `-m` if `ROBOT_NAME` is a virtual robot to indicate that you are running in the Duckiematrix.
 
-**Note**: For the time being, you should include the `--local` flag if `ROBOT_NAME` is a **real** Duckiebot. This
-will cause the code to be run on your laptop which is communicating with your Duckiebot. 
+If `ROBOT_NAME` is a **real** Duckiebot, the object detector runs on the robot's CPU. This works, but it is slow:
+one frame costs roughly 60 ms of CPU time per core, so expect only a few frames per second on a Jetson Nano.
+Add the `--local` flag to run the code on your laptop instead (your laptop talks to the Duckiebot over the network):
+this is faster and it is the recommended option. Use the same choice (`--local` or not) for `build` and `workbench`.
 
 
 However, before you can test you will need to:

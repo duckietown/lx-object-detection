@@ -6,3 +6,6 @@ html/*
 
 # otherwise CI thinks index not clean
 *.resolved
+
+# SAM3 clone made by the local-training notebook
+assets/sam3/
