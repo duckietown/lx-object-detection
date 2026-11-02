@@ -57,7 +57,7 @@ Update your exercise definition and instructions,
   To switch to an ente profile, follow the [Duckietown Manual DTS installation instructions](https://docs.duckietown.com/ente/duckietown-manual/10-setup/02-software/duckietown-shell-dts-installation.html#dt-account-switch-profile).
 
 
-- 💻 Always make sure your Duckietown Shell is updated to the latest version. See [installation instructions](https://github.com/duckietown/duckietown-shell)
+- 💻 Always make sure your Duckietown Shell is updated to the latest version: `pipx upgrade duckietown-shell` (see the [installation instructions](https://github.com/duckietown/duckietown-shell))
 
 - 💻 Update the shell commands: `dts update`
 
@@ -114,6 +114,8 @@ Inside the code editor, use the navigator sidebar on the left-hand side to navig
 
 Follow the instructions on the notebook and work through the notebooks in sequence.
 
+Once you have completed all the notebooks, follow the instructions below to test your code.
+
 
 ### Testing with the Duckiematrix
 
@@ -163,6 +165,8 @@ You can then you can drive the Duckiebot around with the 'w', 'a', 's', and 'd' 
 
 If you get very lost from the road and you want to come back, you can do so with the 'R' key. 
 
+You can also switch to a top-down (overhead) view with the 'V' key.
+
 
 ### Building your code
 
@@ -204,7 +208,7 @@ However, before you can test you will need to:
  - Export your model
 
 
-To get started you can proceed to the [first notebook](./notebooks/01-CNN/cnn.ipynb).
+To get started you can proceed to the [first notebook](./notebooks/01-CNN/cnn.ipynb), an optional introduction to neural networks that you can run either directly in the editor ([intro_to_nn.ipynb](./notebooks/01-CNN/intro_to_nn.ipynb), recommended) or on Google Colab.
 
 ## Credits
 

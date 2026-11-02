@@ -9,3 +9,6 @@ html/*
 
 # SAM3 clone made by the local-training notebook
 assets/sam3/
+
+# CIFAR-10 download made by the notebooks/01-CNN/intro_to_nn notebook
+assets/data/cifar10/
