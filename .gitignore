@@ -12,3 +12,6 @@ assets/sam3/
 
 # CIFAR-10 download made by the notebooks/01-CNN/intro_to_nn notebook
 assets/data/cifar10/
+
+# TensorRT engines cached by the ONNX backend (packages/utils.py in the recipe)
+trt_cache/
