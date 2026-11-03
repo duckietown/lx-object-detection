@@ -1,43 +1,60 @@
 #!/usr/bin/env python3
 
+import time
 import numpy as np
-from pathlib import Path
-import onnxruntime as ort
+import cv2
 from dt_computer_vision.camera.types import Pixel
 
 from duckietown_messages.actuators.differential_pwm import DifferentialPWM
-from solution.config import MODEL_PATH, CONF_THRESHOLD, STOP_DISTANCE, FORWARD_PWM
+from solution.config import CONF_THRESHOLD, STOP_DISTANCE, FORWARD_PWM, DEBUG
+
 
 class MLModel:
-    def __init__(self):
-        print("Initializing MLModel")
+    def __init__(self, backend):
+        print(f"Initializing MLModel (backend: {backend.__class__.__name__})")
+        self.backend = backend
+        self.net_h = backend.net_h
+        self.net_w = backend.net_w
+        self.in_dtype = backend.in_dtype
+        self.conf_threshold = CONF_THRESHOLD
+        self.stop_distance_m = STOP_DISTANCE
         self.ground_projector = None
-
-        if not MODEL_PATH.exists():
-            raise FileNotFoundError("ONNX model not found (did you download your trained model?):", MODEL_PATH)
-
-        sess_opts = ort.SessionOptions()
-        sess_opts.intra_op_num_threads = 1
-
-        self.session = ort.InferenceSession(
-            str(MODEL_PATH),
-            sess_options=sess_opts,
-            providers=["CUDAExecutionProvider", "CPUExecutionProvider"], 
-        )
-
-        inp = self.session.get_inputs()[0]
-        self.input_name = inp.name
-        self.in_dtype = np.float16 if inp.type == "tensor(float16)" else np.float32
-
-        self.net_h = inp.shape[2]
-        self.net_w = inp.shape[3]
-
 
     def _run_detector(self, img_bgr):
         x = self._preprocess(img_bgr)
-        out = self.session.run(None, {self.input_name: x})[0]  # shape [1,N,6]
-        return out[0]
+        t0 = time.perf_counter()
+        raw = self.backend.infer(x)
+        if DEBUG:
+            print(f"inference: {(time.perf_counter() - t0) * 1000:.1f} ms")
+        return self._postprocess(raw)
 
+    def _postprocess(self, raw: np.ndarray, iou_thr: float = 0.45) -> np.ndarray:
+        """Normalize the raw model output to [N, 6] (x1, y1, x2, y2, score, class_id)."""
+        return self._apply_nms(raw, iou_thr)
+
+    def _apply_nms(self, raw: np.ndarray, iou_thr: float = 0.45) -> np.ndarray:
+        """
+        Apply Non-Maximum Suppression to the raw YOLO anchor output.
+        raw: [4+C, anchors] - once transposed to [anchors, 4+C] the columns are: cx, cy, w, h, score_class0, ...
+             (pixel coordinates in input image space)
+        Returns [M, 6]  (x1, y1, x2, y2, score, class_id).
+        """
+
+        # TODO 1. Transpose raw to [anchors, 4+C]
+        #         Extract cx, cy, w, h (columns 0-3) and class scores (columns 4+).
+        #         Hint: class_scores.argmax(axis=1) gives the most-likely class per anchor,
+        #               index into the scores array to get the winning score.
+        #      2. Filter anchors below CONF_THRESHOLD
+        #         If nothing passes the threshold, return np.zeros((0, 6), np.float32).
+        #      3. Convert center format to corner format:
+        #         cx/cy/w/h to x1/y1/x2/y2
+        #      4. Run cv2.dnn.NMSBoxes to suppress overlapping boxes
+        #         It expects boxes as a list of [x1, y1, w, h] (NOT x2/y2).
+        #         If no boxes survive, return np.zeros((0, 6), np.float32).
+        #      5. Assemble the surviving detections into an [M, 6] array:
+        #         columns: x1, y1, x1+w, y1+h, score, class_id
+
+        return np.zeros((0, 6), np.float32)
 
     def _should_stop(self, detections: np.ndarray): 
         
@@ -60,7 +77,6 @@ class MLModel:
 
         return stop
 
-
     def _preprocess(self, img_bgr):
         h, w = img_bgr.shape[:2]
 
@@ -73,16 +89,14 @@ class MLModel:
         img = np.transpose(img, (2, 0, 1))[None, ...]
         return img
 
-
     def set_ground_projector(self, gp):
         self.ground_projector = gp
-        
 
     def get_wheel_velocities_from_image(self, img: np.ndarray):
         try:
             detections = self._run_detector(img)
         except Exception as e:
-            print(f"ONNX inference error {e}")
+            print(f"Inference error: {e}")
             return [DifferentialPWM(left=0.0, right=0.0), None]
         if self._should_stop(detections):
             return [DifferentialPWM(left=0.0, right=0.0), detections]

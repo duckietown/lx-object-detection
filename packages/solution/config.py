@@ -5,8 +5,13 @@ ASSETS_DIR = Path("/data/")
 
 DATA_COLLECTION_ROOT = ASSETS_DIR / "data_collection"
 
+# inference backend used by the agent, see `BACKENDS` in the recipe's `packages/utils.py`
+BACKEND = "onnx"
 MODEL_PATH = PROJECT_ROOT / "assets" / "best.onnx"
 CLASSES_YAML = PROJECT_ROOT / "assets" / "classes.yaml"
+
+# print the inference time of every frame
+DEBUG = False
 
 DATASET_DIR =  ASSETS_DIR / "duckietown_dataset"
 TRAIN_DIR = DATASET_DIR / "train"
